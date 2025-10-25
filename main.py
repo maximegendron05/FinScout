@@ -112,6 +112,40 @@ transactions_dict = [txn.to_dict() for txn in transactions]
 cleaned_transactions = [remove_nulls(txn) for txn in transactions_dict]
 
 import json
+import google.generativeai as genai
 transactions_to_print = convert_dates(cleaned_transactions)
-print(json.dumps(transactions_to_print, indent=2))
+#print(json.dumps(transactions_to_print, indent=2))
 
+
+#keyG = os.getenv('GEMINI')
+genai.configure(api_key='AIzaSyAQBiq41h0mnmgbZpeUEHzhV0xOlQOzt_g')
+
+def total_spending(transactions_to_print):
+    return sum(t["amount"] for t in transactions_to_print)
+
+def spending_by_merchant(transactions_to_print):
+    category_totals = {}
+    for t in transactions_to_print:
+        cat = t["merchant_name"][0] if t.get("merchant_name") else "Uncategorized"
+        category_totals[cat] = category_totals.get(cat, 0) + t["amount"]
+    return category_totals
+
+spending1 = spending_by_merchant(transactions_to_print)
+
+
+
+prompt = f"""
+Spending summary:
+The spending by category is: {spending1}.
+
+1. Identify spending patterns.
+2. Suggest 5 concrete ways to reduce or optimize spending.
+3. Estimate potential monthly savings.
+"""
+
+model = genai.GenerativeModel("gemini-2.5-flash")
+response = model.generate_content(prompt)
+
+print("The response is ")
+print("---------------------")
+print(response.text)
